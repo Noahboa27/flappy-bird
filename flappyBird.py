@@ -1,4 +1,4 @@
-#! /usr/bin/python3.8
+#! /usr/bin/python3
 #  This is my first pygame project and hopefully it will be a flappy bird clone.
 
 ### TODO: Randomize birds, pipes, and backgrounds
