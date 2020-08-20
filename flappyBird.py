@@ -5,6 +5,8 @@
 
 ### TODO: Make the start screen
 
+### TODO: Make the bird and ceiling collide
+
 
 import pygame, sys, random
 
@@ -17,9 +19,9 @@ def draw_floor():
 	screen.blit(floor_surface,(floor_x_pos + 576, 900))
 
 
-def create_pointbox():
-	pointbox_rect = pygame.Rect()
-	### TODO: Make a collision rectangle between the pipes to keep score.
+# def create_pointbox():
+# 	pointbox_rect = pygame.Rect()
+# 	### TODO: Make a collision rectangle between the pipes to keep score.
 
 
 
@@ -27,7 +29,8 @@ def create_pipe():
 	random_pipe_height = random.choice(pipe_height)
 	bottom_pipe = pipe_surface.get_rect(midtop = (700, random_pipe_height))
 	top_pipe = pipe_surface.get_rect(midbottom = (700, random_pipe_height - 300))
-	return bottom_pipe, top_pipe
+	pointbox_rect = pygame.Rect(700, random_pipe_height - 300, random_pipe_height, 750)
+	return bottom_pipe, pointbox_rect, top_pipe
 
 
 def move_pipes(pipes):
@@ -35,21 +38,24 @@ def move_pipes(pipes):
 		pipe.centerx -= 5
 	return pipes
 
-
+RED = (255, 0, 0)
 def draw_pipes(pipes):
 	for pipe in pipes:
 		if pipe.bottom >= 1024:
 			# Because this is list a rectangles we already have the x and y.
 			# So we can simply pass pipe like with the bird rectangle
 			screen.blit(pipe_surface, pipe)
+			pygame.draw.rect(screen, RED, pipe)
 		else:
 			# The other parameters are bool for x and y
 			flip_pipe = pygame.transform.flip(pipe_surface, False, True)
 			screen.blit(flip_pipe, pipe)
+			pygame.draw.rect(screen, RED, pipe)
 
 
 def check_collision(pipes):
 	for pipe in pipes:
+		print(pipe)
 		# returns true if there is a collision of rectangles
 		# have as few collisions as possible for performance
 		if bird_rect.colliderect(pipe):
@@ -157,10 +163,7 @@ game_over_surface = pygame.transform.scale2x(\
 	pygame.image.load('assets/gameover.png').convert_alpha())
 game_over_rect = game_over_surface.get_rect(center = (288, 512))
 
-# Have to increment for a new event, +2, +3...
-BIRDFLAP = pygame.USEREVENT + 1
-pygame.time.set_timer(BIRDFLAP, 200)
-
+# Pipe surfaces
 pipe_surface = pygame.transform.scale2x(pygame.image.load(\
 	'assets/pipe-green.png').convert())
 pipe_list = []
@@ -169,6 +172,10 @@ SPAWNPIPE = pygame.USEREVENT
 # Every 1.2 seconds an event is triggered
 pygame.time.set_timer(SPAWNPIPE, 1200)
 pipe_height = [400, 600, 800]
+
+# Have to increment for a new event, +2, +3...
+BIRDFLAP = pygame.USEREVENT + 1
+pygame.time.set_timer(BIRDFLAP, 200)
 
 # Creates a sound object for each sound
 flap_sound = pygame.mixer.Sound('sound/sfx_wing.wav')
