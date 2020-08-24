@@ -11,100 +11,6 @@
 import pygame, sys, random
 
 
-                              ##################
-############################### Game Functions ###############################
-                              ##################
-def draw_floor():
-	screen.blit(floor_surface,(floor_x_pos, 900))
-	screen.blit(floor_surface,(floor_x_pos + 576, 900))
-
-
-# def create_pointbox():
-# 	pointbox_rect = pygame.Rect()
-# 	### TODO: Make a collision rectangle between the pipes to keep score.
-
-
-
-def create_pipe():
-	random_pipe_height = random.choice(pipe_height)
-	bottom_pipe = pipe_surface.get_rect(midtop = (700, random_pipe_height))
-	top_pipe = pipe_surface.get_rect(midbottom = (700, random_pipe_height - 300))
-	pointbox_rect = pygame.Rect(700, random_pipe_height - 300, random_pipe_height, 750)
-	return bottom_pipe, pointbox_rect, top_pipe
-
-
-def move_pipes(pipes):
-	for pipe in pipes:
-		pipe.centerx -= 5
-	return pipes
-
-RED = (255, 0, 0)
-def draw_pipes(pipes):
-	for pipe in pipes:
-		if pipe.bottom >= 1024:
-			# Because this is list a rectangles we already have the x and y.
-			# So we can simply pass pipe like with the bird rectangle
-			screen.blit(pipe_surface, pipe)
-			pygame.draw.rect(screen, RED, pipe)
-		else:
-			# The other parameters are bool for x and y
-			flip_pipe = pygame.transform.flip(pipe_surface, False, True)
-			screen.blit(flip_pipe, pipe)
-			pygame.draw.rect(screen, RED, pipe)
-
-
-def check_collision(pipes):
-	for pipe in pipes:
-		print(pipe)
-		# returns true if there is a collision of rectangles
-		# have as few collisions as possible for performance
-		if bird_rect.colliderect(pipe):
-			death_sound.play()
-			return False
-
-	if bird_rect.top <= 0 or bird_rect.bottom >= 900:
-		death_sound.play()
-		return False
-
-	return True
-
-
-def rotate_bird(bird):
-	# rotozoom can scale and rotate
-	# pass surface, angle, and scale
-	new_bird = pygame.transform.rotozoom(bird, -bird_movement * 4, 1)
-	return new_bird
-
-
-def bird_animation():
-	new_bird = bird_frames[bird_frame_index]
-	new_bird_rect = new_bird.get_rect(center = (100, bird_rect.centery))
-	return new_bird, new_bird_rect
-
-
-def score_display(game_state):
-	if game_state == 'game_on':
-		# param(what to display, anti-a, color(RGB))
-		score_surface = game_font.render(str(int(score)), True, (255, 255, 255))
-		score_rect = score_surface.get_rect(center = (288, 100))
-		screen.blit(score_surface, score_rect)
-	if game_state == 'game_over':
-		score_surface = game_font.render(\
-			f'Score: {str(int(score))}', True, (255, 255, 255))
-		score_rect = score_surface.get_rect(center = (288, 100))
-		screen.blit(score_surface, score_rect)
-
-		high_score_surface = game_font.render(\
-			f'High score: {str(int(high_score))}', True, (255, 255, 255))
-		high_score_rect = score_surface.get_rect(center = (240, 150))
-		screen.blit(high_score_surface, high_score_rect)
-
-
-def update_score(score, high_score):
-	if score > high_score:
-		high_score = score
-	return high_score
-
                             #####################
 ############################# Game Initializers #############################
                             #####################
@@ -185,6 +91,109 @@ death_sound.set_volume(0.2)
 score_sound = pygame.mixer.Sound('sound/sfx_point.wav')
 score_sound.set_volume(0.2)
 
+
+                              ##################
+############################### Game Functions ###############################
+                              ##################
+def draw_floor():
+	screen.blit(floor_surface,(floor_x_pos, 900))
+	screen.blit(floor_surface,(floor_x_pos + 576, 900))
+
+
+# def create_pointbox():
+# 	pointbox_rect = pygame.Rect()
+# 	### TODO: Make a collision rectangle between the pipes to keep score.
+
+
+
+def create_pipe():
+	random_pipe_height = random.choice(pipe_height)
+	bottom_pipe = pipe_surface.get_rect(midtop = (700, random_pipe_height))
+	top_pipe = pipe_surface.get_rect(midbottom = (700, random_pipe_height - 300))
+	pointbox_rect = pygame.Rect(700, random_pipe_height - 300, 50, 300)
+	return bottom_pipe, pointbox_rect, top_pipe
+
+
+def move_pipes(pipes):
+	for pipe in pipes:
+		pipe.centerx -= 5
+	return pipes
+
+RED = (255, 0, 0)
+def draw_pipes(pipes):
+	for pipe in pipes:
+		if pipe.height == 300:
+			pygame.draw.rect(screen, RED, pipe)
+			# continue
+		elif pipe.bottom >= 1024:
+			# Because this is list a rectangles we already have the x and y.
+			# So we can simply pass pipe like with the bird rectangle
+			screen.blit(pipe_surface, pipe)
+		else:
+			# The other parameters are bool for x and y
+			flip_pipe = pygame.transform.flip(pipe_surface, False, True)
+			screen.blit(flip_pipe, pipe)
+
+
+def check_collision(pipes, score):
+	for pipe in pipes:
+		# returns true if there is a collision of rectangles
+		# have as few collisions as possible for performance
+		if bird_rect.colliderect(pipe):
+			if pipe.height == 300:
+				score_sound.play()
+				increment_score(score)
+				continue
+			death_sound.play()
+			return False
+
+	if bird_rect.top <= 0 or bird_rect.bottom >= 900:
+		death_sound.play()
+		return False
+
+	return True
+
+
+def rotate_bird(bird):
+	# rotozoom can scale and rotate
+	# pass surface, angle, and scale
+	new_bird = pygame.transform.rotozoom(bird, -bird_movement * 4, 1)
+	return new_bird
+
+
+def bird_animation():
+	new_bird = bird_frames[bird_frame_index]
+	new_bird_rect = new_bird.get_rect(center = (100, bird_rect.centery))
+	return new_bird, new_bird_rect
+
+
+def score_display(game_state):
+	if game_state == 'game_on':
+		# param(what to display, anti-a, color(RGB))
+		score_surface = game_font.render(str(int(score)), True, (255, 255, 255))
+		score_rect = score_surface.get_rect(center = (288, 100))
+		screen.blit(score_surface, score_rect)
+	if game_state == 'game_over':
+		score_surface = game_font.render(\
+			f'Score: {str(int(score))}', True, (255, 255, 255))
+		score_rect = score_surface.get_rect(center = (288, 100))
+		screen.blit(score_surface, score_rect)
+
+		high_score_surface = game_font.render(\
+			f'High score: {str(int(high_score))}', True, (255, 255, 255))
+		high_score_rect = score_surface.get_rect(center = (240, 150))
+		screen.blit(high_score_surface, high_score_rect)
+
+
+def update_score(score, high_score):
+	if score > high_score:
+		high_score = score
+	return high_score
+
+def increment_score(score):
+	score += 1
+
+
                         ##############################
 ######################### This is the main game loop #########################
                         ##############################
@@ -229,14 +238,14 @@ while True:
 		# centerx and centery are used to move the rectangle
 		bird_rect.centery += round(bird_movement)
 		screen.blit(rotated_bird, bird_rect)
-		game_active = check_collision(pipe_list)
+		game_active = check_collision(pipe_list, score)
 
 		# Pipes
 		pipe_list = move_pipes(pipe_list)
 		draw_pipes(pipe_list)
 
-		# Score Display
-		score += 0.01
+		# Score
+		## score += 0.01
 		score_display('game_on')
 	else:
 		high_score = update_score(score, high_score)
