@@ -73,8 +73,10 @@ game_over_rect = game_over_surface.get_rect(center = (288, 512))
 pipe_surface = pygame.transform.scale2x(pygame.image.load(\
 	'assets/pipe-green.png').convert())
 pipe_list = []
+
 # Event for spawning pipes
 SPAWNPIPE = pygame.USEREVENT
+
 # Every 1.2 seconds an event is triggered
 pygame.time.set_timer(SPAWNPIPE, 1200)
 pipe_height = [400, 600, 800]
