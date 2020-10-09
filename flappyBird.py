@@ -1,11 +1,10 @@
 #! /usr/bin/python3
 #  This is my first pygame project and hopefully it will be a flappy bird clone.
 
-### TODO: Randomize birds, pipes, and backgrounds
 
 ### TODO: Make the start screen
 
-### TODO: Make the bird and ceiling collide
+### TODO: Randomize birds, pipes, and backgrounds
 
 
 import pygame, sys, random
@@ -32,9 +31,10 @@ game_font = pygame.font.Font('04B_19.TTF', 40)
 # Game variables
 gravity = 0.25
 bird_movement = 0
-game_active = True
+game_active = False
 score = 0
 high_score = 0
+point_switch = False
 
 # You can have as many surfaces as you want
 # This will be the background for the game
@@ -77,9 +77,9 @@ pipe_list = []
 # Event for spawning pipes
 SPAWNPIPE = pygame.USEREVENT
 
-# Every 1.2 seconds an event is triggered
+# Every 1.2 seconds this event is triggered
 pygame.time.set_timer(SPAWNPIPE, 1200)
-pipe_height = [400, 600, 800]
+pipe_height = [450, 600, 750]
 
 # Have to increment for a new event, +2, +3...
 BIRDFLAP = pygame.USEREVENT + 1
@@ -113,7 +113,7 @@ def create_pipe():
 	bottom_pipe = pipe_surface.get_rect(midtop = (700, random_pipe_height))
 	top_pipe = pipe_surface.get_rect(midbottom = (700, random_pipe_height - 300))
 	pointbox_rect = pygame.Rect(700, random_pipe_height - 300, 50, 300)
-	return bottom_pipe, pointbox_rect, top_pipe
+	return bottom_pipe, top_pipe, pointbox_rect
 
 
 def move_pipes(pipes):
@@ -122,6 +122,7 @@ def move_pipes(pipes):
 	return pipes
 
 RED = (255, 0, 0)
+
 def draw_pipes(pipes):
 	for pipe in pipes:
 		if pipe.height == 300:
@@ -131,23 +132,30 @@ def draw_pipes(pipes):
 			# Because this is list a rectangles we already have the x and y.
 			# So we can simply pass pipe like with the bird rectangle
 			screen.blit(pipe_surface, pipe)
+			pygame.draw.rect(screen, RED, pipe)
 		else:
 			# The other parameters are bool for x and y
 			flip_pipe = pygame.transform.flip(pipe_surface, False, True)
 			screen.blit(flip_pipe, pipe)
+			pygame.draw.rect(screen, RED, pipe)
 
 
-def check_collision(pipes, score):
+def check_collision(pipes):
+	global point_switch
 	for pipe in pipes:
 		# returns true if there is a collision of rectangles
 		# have as few collisions as possible for performance
 		if bird_rect.colliderect(pipe):
+			# This is for the point hitbox
 			if pipe.height == 300:
-				score_sound.play()
-				increment_score(score)
+				if point_switch == False:
+					score_sound.play()
+					point_switch = True
 				continue
 			death_sound.play()
 			return False
+		else:
+			point_switch = False
 
 	if bird_rect.top <= 0 or bird_rect.bottom >= 900:
 		death_sound.play()
@@ -171,10 +179,11 @@ def bird_animation():
 
 def score_display(game_state):
 	if game_state == 'game_on':
-		# param(what to display, anti-a, color(RGB))
+		# render (what to display, anti-a, color(RGB))
 		score_surface = game_font.render(str(int(score)), True, (255, 255, 255))
 		score_rect = score_surface.get_rect(center = (288, 100))
 		screen.blit(score_surface, score_rect)
+
 	if game_state == 'game_over':
 		score_surface = game_font.render(\
 			f'Score: {str(int(score))}', True, (255, 255, 255))
@@ -186,14 +195,14 @@ def score_display(game_state):
 		high_score_rect = score_surface.get_rect(center = (240, 150))
 		screen.blit(high_score_surface, high_score_rect)
 
+	if game_state == 'game_start':
+		pass
+
 
 def update_score(score, high_score):
 	if score > high_score:
 		high_score = score
 	return high_score
-
-def increment_score(score):
-	score += 1
 
 
                         ##############################
@@ -237,10 +246,11 @@ while True:
 		# Bird Movement
 		bird_movement += gravity
 		rotated_bird = rotate_bird(bird_surface)
+
 		# centerx and centery are used to move the rectangle
 		bird_rect.centery += round(bird_movement)
 		screen.blit(rotated_bird, bird_rect)
-		game_active = check_collision(pipe_list, score)
+		game_active = check_collision(pipe_list)
 
 		# Pipes
 		pipe_list = move_pipes(pipe_list)
@@ -262,5 +272,5 @@ while True:
 	
 
 	pygame.display.update()
-	# This is the framerate you are setting the game to run at
+	# This is the framerate I am setting the game to run at
 	clock.tick(120)
