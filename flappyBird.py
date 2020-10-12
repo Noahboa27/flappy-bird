@@ -2,8 +2,6 @@
 #  This is my first pygame project and hopefully it will be a flappy bird clone.
 
 
-### TODO: Make the start screen
-
 ### TODO: Randomize birds, pipes, and backgrounds
 
 
@@ -35,6 +33,7 @@ game_active = False
 score = 0
 high_score = 0
 point_switch = False
+game_start = True
 
 # You can have as many surfaces as you want
 # This will be the background for the game
@@ -46,6 +45,7 @@ bg_surface = pygame.transform.scale2x(bg_surface)
 floor_surface = pygame.transform.scale2x(pygame.image.load(\
 	'assets/base.png').convert())
 floor_x_pos = 0
+floor_y_pos = 900
 
 # Bird surfaces
 bird_upflap = pygame.transform.scale2x(pygame.image.load(\
@@ -76,7 +76,6 @@ pipe_list = []
 
 # Event for spawning pipes
 SPAWNPIPE = pygame.USEREVENT
-
 # Every 1.2 seconds this event is triggered
 pygame.time.set_timer(SPAWNPIPE, 1200)
 pipe_height = [450, 600, 750]
@@ -84,6 +83,10 @@ pipe_height = [450, 600, 750]
 # Have to increment for a new event, +2, +3...
 BIRDFLAP = pygame.USEREVENT + 1
 pygame.time.set_timer(BIRDFLAP, 200)
+
+# Timer to reset the point flag
+POINTFLAG = pygame.USEREVENT + 2
+pygame.time.set_timer(POINTFLAG, 600)
 
 # Creates a sound object for each sound
 flap_sound = pygame.mixer.Sound('sound/sfx_wing.wav')
@@ -98,14 +101,8 @@ score_sound.set_volume(0.2)
 ############################### Game Functions ###############################
                               ##################
 def draw_floor():
-	screen.blit(floor_surface,(floor_x_pos, 900))
-	screen.blit(floor_surface,(floor_x_pos + 576, 900))
-
-
-# def create_pointbox():
-# 	pointbox_rect = pygame.Rect()
-# 	### TODO: Make a collision rectangle between the pipes to keep score.
-
+	screen.blit(floor_surface,(floor_x_pos, floor_y_pos))
+	screen.blit(floor_surface,(floor_x_pos + 576, floor_y_pos))
 
 
 def create_pipe():
@@ -121,27 +118,24 @@ def move_pipes(pipes):
 		pipe.centerx -= 5
 	return pipes
 
-RED = (255, 0, 0)
 
 def draw_pipes(pipes):
 	for pipe in pipes:
 		if pipe.height == 300:
-			pygame.draw.rect(screen, RED, pipe)
-			# continue
+			continue
 		elif pipe.bottom >= 1024:
 			# Because this is list a rectangles we already have the x and y.
 			# So we can simply pass pipe like with the bird rectangle
 			screen.blit(pipe_surface, pipe)
-			pygame.draw.rect(screen, RED, pipe)
 		else:
 			# The other parameters are bool for x and y
 			flip_pipe = pygame.transform.flip(pipe_surface, False, True)
 			screen.blit(flip_pipe, pipe)
-			pygame.draw.rect(screen, RED, pipe)
 
 
 def check_collision(pipes):
 	global point_switch
+	global score
 	for pipe in pipes:
 		# returns true if there is a collision of rectangles
 		# have as few collisions as possible for performance
@@ -150,14 +144,14 @@ def check_collision(pipes):
 			if pipe.height == 300:
 				if point_switch == False:
 					score_sound.play()
+					score += 1
 					point_switch = True
 				continue
+
 			death_sound.play()
 			return False
-		else:
-			point_switch = False
 
-	if bird_rect.top <= 0 or bird_rect.bottom >= 900:
+	if bird_rect.top <= 0 or bird_rect.bottom >= floor_y_pos:
 		death_sound.play()
 		return False
 
@@ -195,9 +189,6 @@ def score_display(game_state):
 		high_score_rect = score_surface.get_rect(center = (240, 150))
 		screen.blit(high_score_surface, high_score_rect)
 
-	if game_state == 'game_start':
-		pass
-
 
 def update_score(score, high_score):
 	if score > high_score:
@@ -223,6 +214,7 @@ while True:
 				flap_sound.play()
 			if event.key == pygame.K_SPACE and game_active == False:
 				game_active = True
+				game_start = False
 				pipe_list.clear()
 				bird_rect.center = (100, 512)
 				bird_movement = 0
@@ -237,6 +229,8 @@ while True:
 				bird_frame_index = 0
 
 			bird_surface, bird_rect = bird_animation()
+		if event.type == POINTFLAG:
+			point_switch = False
 
 	# blit() adds a surface to the display surface
 	# Uses x and y coor to place and the origin is at the top left
@@ -257,8 +251,9 @@ while True:
 		draw_pipes(pipe_list)
 
 		# Score
-		## score += 0.01
 		score_display('game_on')
+	elif game_active == False and game_start:
+		screen.blit(start_game_surface, start_game_rect)
 	else:
 		high_score = update_score(score, high_score)
 		screen.blit(game_over_surface, game_over_rect)
